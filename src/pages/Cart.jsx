@@ -1,10 +1,10 @@
-import { Container, Typography, List, ListItem, ListItemText, Button, Divider } from '@mui/material';
+import { Container, Typography, List, ListItem, ListItemText, Button, Divider, TextField, Box } from '@mui/material';
 import { useCart } from '../context/CartContext';
 
 const Cart = () => {
-  const { cart, removeFromCart } = useCart();
+  const { cart, removeFromCart, updateQuantity } = useCart();
 
-  const total = cart.reduce((sum, item) => sum + item.price, 0);
+  const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   return (
     <Container sx={{ py: 4 }}>
@@ -20,13 +20,22 @@ const Cart = () => {
                   primary={item.name} 
                   secondary={`$${item.price}`} 
                 />
-                <Button 
-                  onClick={() => removeFromCart(item.id)}
-                  variant="outlined" 
-                  color="error"
-                >
-                  Remove
-                </Button>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <TextField
+                    type="number"
+                    value={item.quantity}
+                    onChange={(e) => updateQuantity(item.id, parseInt(e.target.value))}
+                    inputProps={{ min: 1 }}
+                    sx={{ width: 80 }}
+                  />
+                  <Button 
+                    onClick={() => removeFromCart(item.id)}
+                    variant="outlined" 
+                    color="error"
+                  >
+                    Remove
+                  </Button>
+                </Box>
               </ListItem>
             ))}
           </List>

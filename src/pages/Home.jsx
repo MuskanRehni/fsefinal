@@ -6,6 +6,7 @@ const Home = () => {
 
   const handleStartShopping = () => {
     const token = localStorage.getItem('token');
+    console.log('Current token:', token); // Add this line for debugging
     if (!token) {
       navigate('/login');
     } else {
