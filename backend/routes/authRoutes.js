@@ -1,18 +1,24 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const db = require('../config/db');
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const db = require("../config/db");
+const cuid = require("cuid");
 
 // Register
-router.post('/signup', async (req, res) => {
+router.post("/signup", async (req, res) => {
     try {
         const { name, email, password } = req.body;
-        
+
+        const id = cuid();
+
         // Check if user exists
-        const [users] = await db.execute('SELECT * FROM users WHERE email = ?', [email]);
+        const [users] = await db.execute(
+            "SELECT * FROM users WHERE email = ?",
+            [email]
+        );
         if (users.length > 0) {
-            return res.status(400).json({ message: 'User already exists' });
+            return res.status(400).json({ message: "User already exists" });
         }
 
         // Hash password
@@ -21,33 +27,36 @@ router.post('/signup', async (req, res) => {
 
         // Save user
         const [result] = await db.execute(
-            'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
-            [name, email, hashedPassword]
+            "INSERT INTO users (id, name, email, password) VALUES (? ,?, ?, ?)",
+            [id, name, email, hashedPassword]
         );
 
         // Create token
         const token = jwt.sign(
             { id: result.insertId },
             process.env.JWT_SECRET,
-            { expiresIn: '1h' }
+            { expiresIn: "1h" }
         );
 
         res.json({ token });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({ message: "Server error" });
     }
 });
 
 // Login
-router.post('/login', async (req, res) => {
+router.post("/login", async (req, res) => {
     try {
         const { email, password } = req.body;
 
         // Check if user exists
-        const [users] = await db.execute('SELECT * FROM users WHERE email = ?', [email]);
+        const [users] = await db.execute(
+            "SELECT * FROM users WHERE email = ?",
+            [email]
+        );
         if (users.length === 0) {
-            return res.status(400).json({ message: 'Invalid credentials' });
+            return res.status(400).json({ message: "Invalid credentials" });
         }
 
         const user = users[0];
@@ -55,20 +64,18 @@ router.post('/login', async (req, res) => {
         // Validate password
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(400).json({ message: 'Invalid credentials' });
+            return res.status(400).json({ message: "Invalid credentials" });
         }
 
         // Create token
-        const token = jwt.sign(
-            { id: user.id },
-            process.env.JWT_SECRET,
-            { expiresIn: '1h' }
-        );
+        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+            expiresIn: "1h",
+        });
 
         res.json({ token });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({ message: "Server error" });
     }
 });
 
